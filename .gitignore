@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# React Native Packager
+# Use yarn cache instead of npm
+yarn.lock
+
+# Xcode
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
