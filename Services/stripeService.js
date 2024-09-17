@@ -1,85 +1,91 @@
-const config = require('../config');
-const auth = require('../middleware/auth');
+const config = require("../config");
+const auth = require("../middleware/auth");
 
-const stripe = require('stripe')(config.StripePublishableKey);
+const stripe = require("stripe")(config.StripePublishableKey);
 
 const paymentSheet = async (req, res) => {
-  console.log('Payment sheet called');
-  const {email} = req.body; // Destructure to get the email from req.body
+  try {
+    console.log("Payment sheet called");
+    const { email } = req.body; // Destructure to get the email from req.body
 
-  let {username, fullname, stripeUserId} = await auth.getUserStripeDetails(
-    email,
-  );
+    let { username, fullname, stripeUserId } = await auth.getUserStripeDetails(
+      email
+    );
 
-  if (stripeUserId == null || stripeUserId == '') {
-    console.log('Stripe ID not found, creating a new customer');
-    const customer = await stripe.customers.create({
-      name: fullname,
-      email: email,
+    if (stripeUserId == null || stripeUserId == "") {
+      console.log("Stripe ID not found, creating a new customer");
+      const customer = await stripe.customers.create({
+        name: fullname,
+        email: email,
+      });
+      stripeUserId = customer.id;
+      await auth.setUserStripeId(email, stripeUserId); // Save the customer ID with the email
+    }
+
+    // Create ephemeral key and setup intent
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: stripeUserId },
+      { apiVersion: "2024-06-20" }
+    );
+    const setupIntent = await stripe.setupIntents.create({
+      customer: stripeUserId,
+      automatic_payment_methods: { enabled: true },
     });
-    stripeUserId = customer.id;
-    await auth.setUserStripeId(email, stripeUserId); // Save the customer ID with the email
+
+    res.json({
+      setupIntent: setupIntent.client_secret,
+      ephemeralKey: ephemeralKey.secret,
+      customer: stripeUserId,
+      publishableKey: config.StripePublishableKey,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
   }
-
-  // Create ephemeral key and setup intent
-  const ephemeralKey = await stripe.ephemeralKeys.create(
-    {customer: stripeUserId},
-    {apiVersion: '2024-06-20'},
-  );
-  const setupIntent = await stripe.setupIntents.create({
-    customer: stripeUserId,
-    automatic_payment_methods: {enabled: true},
-  });
-
-  res.json({
-    setupIntent: setupIntent.client_secret,
-    ephemeralKey: ephemeralKey.secret,
-    customer: stripeUserId,
-    publishableKey: config.StripePublishableKey,
-  });
 };
 
 const checkStripePaymentandAddressPresent = async (req, res) => {
-  console.log('Checking payment and address present');
-  const {email} = req.body;
-  console.log('Email:', email);
-
-  let {username, fullname, stripeUserId} = await auth.getUserStripeDetails(
-    email,
-  );
-
-  if (stripeUserId == null || stripeUserId == '') {
-    return res.json({paymentPresent: false, address: null});
-  }
-
   try {
+    console.log("Checking payment and address present");
+    const { email } = req.body;
+    console.log("Email:", email);
+
+    let { username, fullname, stripeUserId } = await auth.getUserStripeDetails(
+      email
+    );
+
+    if (stripeUserId == null || stripeUserId == "") {
+      return res.json({ paymentPresent: false, address: null });
+    }
+
     const customer = await stripe.customers.retrieve(stripeUserId);
 
-    console.log('Stripe ID:', stripeUserId);
-    console.log('Customer:', customer.id);
+    console.log("Stripe ID:", stripeUserId);
+    console.log("Customer:", customer.id);
     const paymentMethods = await stripe.customers.listPaymentMethods(
       stripeUserId,
       {
         limit: 3,
-      },
+      }
     );
 
     if (paymentMethods.data.length == 0) {
-      return res.json({paymentPresent: false, address: customer.address});
+      return res.json({ paymentPresent: false, address: customer.address });
     } else {
-      return res.json({paymentPresent: true, address: customer.address});
+      return res.json({ paymentPresent: true, address: customer.address });
     }
   } catch (error) {
-    console.error('In catch block for payment and address present:');
-    return res.json({paymentPresent: false, address: null});
+    console.error("In catch block for payment and address present:");
+    return res.json({ paymentPresent: false, address: null });
   }
 };
 
 const updateStripeCustomerAddress = async (req, res) => {
-  const {email, address} = req.body;
   try {
-    let {username, fullname, stripeUserId} = await auth.getUserStripeDetails(
-      email,
+    const { email, address } = req.body;
+
+    let { username, fullname, stripeUserId } = await auth.getUserStripeDetails(
+      email
     );
 
     // Update customer address on Stripe
@@ -94,50 +100,51 @@ const updateStripeCustomerAddress = async (req, res) => {
       },
     });
 
-    res.json({success: true, customer: updatedCustomer});
+    res.json({ success: true, customer: updatedCustomer });
   } catch (error) {
-    console.error('Error updating customer address:', error);
+    console.error("Error updating customer address:", error);
     res
       .status(500)
-      .json({success: false, error: 'Failed to update customer address'});
+      .json({ success: false, error: "Failed to update customer address" });
   }
 };
 
 const createStripeConnectedAccount = async (req, res) => {
-  const {email, address} = req.body;
   try {
-    let {username, fullname, stripeUserId} = await auth.getUserStripeDetails(
-      email,
+    const { email, address } = req.body;
+
+    let { username, fullname, stripeUserId } = await auth.getUserStripeDetails(
+      email
     );
 
     const account = await stripe.accounts.create({
       controller: {
         losses: {
-          payments: 'application',
+          payments: "application",
         },
         fees: {
-          payer: 'application',
+          payer: "application",
         },
         stripe_dashboard: {
-          type: 'express',
+          type: "express",
         },
       },
       business_profile: {
-        url: 'https://hayersimrat23.wixsite.com/getpanda',
-        mcc: '5734',
-        product_description: 'Test product description',
+        url: "https://hayersimrat23.wixsite.com/getpanda",
+        mcc: "5734",
+        product_description: "Test product description",
       },
     });
 
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
       refresh_url:
-        config.SERVER_URL + '/api/auth/createStripeConnectedAccountRefreshURL',
+        config.SERVER_URL + "/api/auth/createStripeConnectedAccountRefreshURL",
       return_url:
-        config.SERVER_URL + '/api/auth/createStripeConnectedAccountReturnURL',
-      type: 'account_onboarding',
+        config.SERVER_URL + "/api/auth/createStripeConnectedAccountReturnURL",
+      type: "account_onboarding",
       collection_options: {
-        fields: 'eventually_due',
+        fields: "eventually_due",
       },
     });
 
@@ -149,34 +156,35 @@ const createStripeConnectedAccount = async (req, res) => {
       accountLink: accountLink,
     });
   } catch (error) {
-    console.error('Error updating customer address:', error);
+    console.error("Error updating customer address:", error);
     res
       .status(500)
-      .json({success: false, error: 'Failed to update customer address'});
+      .json({ success: false, error: "Failed to update customer address" });
   }
 };
 
 const createStripeConnectedAccountReturnURL = async (req, res) => {
-  console.log('Return URL called');
+  console.log("Return URL called");
   console.log(req.body);
-  res.json({message: 'Return URL called'});
+  res.json({ message: "Return URL called" });
 };
 
 const createStripeConnectedAccountRefreshURL = async (req, res) => {
-  console.log('Refresh URL called');
-  console.log(req.body);
-  //const {email, address} = req.body;
   try {
+    console.log("Refresh URL called");
+    console.log(req.body);
+    //const {email, address} = req.body;
+
     const account = await stripe.accounts.create({
       controller: {
         losses: {
-          payments: 'application',
+          payments: "application",
         },
         fees: {
-          payer: 'application',
+          payer: "application",
         },
         stripe_dashboard: {
-          type: 'express',
+          type: "express",
         },
       },
     });
@@ -184,12 +192,12 @@ const createStripeConnectedAccountRefreshURL = async (req, res) => {
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
       refresh_url:
-        config.SERVER_URL + '/api/auth/createStripeConnectedAccountRefreshURL',
+        config.SERVER_URL + "/api/auth/createStripeConnectedAccountRefreshURL",
       return_url:
-        config.SERVER_URL + '/api/auth/createStripeConnectedAccountReturnURL',
-      type: 'account_onboarding',
+        config.SERVER_URL + "/api/auth/createStripeConnectedAccountReturnURL",
+      type: "account_onboarding",
       collection_options: {
-        fields: 'eventually_due',
+        fields: "eventually_due",
       },
     });
 
@@ -197,20 +205,21 @@ const createStripeConnectedAccountRefreshURL = async (req, res) => {
 
     res.redirect(accountLink.url);
   } catch (error) {
-    console.error('Error updating customer address:', error);
+    console.error("Error updating customer address:", error);
     res
       .status(500)
-      .json({success: false, error: 'Failed to update customer address'});
+      .json({ success: false, error: "Failed to update customer address" });
   }
 };
 
 const checkStripeConnectedAccountOnboardingComplete = async (req, res) => {
-  const {email} = req.body;
   try {
-    const {stripeConnectedAccountId} = await auth.getUserStripeDetails(email);
-    console.log('Account ID:', stripeConnectedAccountId);
-    if (stripeConnectedAccountId == null || stripeConnectedAccountId == '') {
-      return res.json({success: false, accountId: stripeConnectedAccountId});
+    const { email } = req.body;
+
+    const { stripeConnectedAccountId } = await auth.getUserStripeDetails(email);
+    console.log("Account ID:", stripeConnectedAccountId);
+    if (stripeConnectedAccountId == null || stripeConnectedAccountId == "") {
+      return res.json({ success: false, accountId: stripeConnectedAccountId });
     }
     const account = await stripe.accounts.retrieve(stripeConnectedAccountId);
 
@@ -218,52 +227,54 @@ const checkStripeConnectedAccountOnboardingComplete = async (req, res) => {
       account.requirements.currently_due == null ||
       account.requirements.currently_due.length == 0
     ) {
-      res.json({success: true, accountId: stripeConnectedAccountId});
+      res.json({ success: true, accountId: stripeConnectedAccountId });
     } else {
-      res.json({success: false, accountId: stripeConnectedAccountId});
+      res.json({ success: false, accountId: stripeConnectedAccountId });
     }
   } catch (error) {
-    console.error('Error checking account onboarding status:', error);
+    console.error("Error checking account onboarding status:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to check account onboarding status',
+      error: "Failed to check account onboarding status",
     });
   }
 };
 
 const createStripeLoginLink = async (req, res) => {
-  const {email} = req.body;
   try {
-    const {stripeConnectedAccountId} = await auth.getUserStripeDetails(email);
-    console.log('Account ID:', stripeConnectedAccountId);
-    if (stripeConnectedAccountId == null || stripeConnectedAccountId == '') {
-      return res.json({success: false, accountId: stripeConnectedAccountId});
+    const { email } = req.body;
+
+    const { stripeConnectedAccountId } = await auth.getUserStripeDetails(email);
+    console.log("Account ID:", stripeConnectedAccountId);
+    if (stripeConnectedAccountId == null || stripeConnectedAccountId == "") {
+      return res.json({ success: false, accountId: stripeConnectedAccountId });
     }
     const loginLink = await stripe.accounts.createLoginLink(
-      stripeConnectedAccountId,
+      stripeConnectedAccountId
     );
-    res.json({success: true, loginLink: loginLink});
+    res.json({ success: true, loginLink: loginLink });
   } catch (error) {
-    console.error('Error creating login link:', error);
+    console.error("Error creating login link:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create login link',
+      error: "Failed to create login link",
     });
   }
 };
 
 const continueOnboarding = async (req, res) => {
-  const {email} = req.body;
   try {
-    const {stripeConnectedAccountId} = await auth.getUserStripeDetails(email);
-    console.log('Account ID:', stripeConnectedAccountId);
-    if (stripeConnectedAccountId == null || stripeConnectedAccountId == '') {
-      return res.json({success: false, accountId: stripeConnectedAccountId});
+    const { email } = req.body;
+
+    const { stripeConnectedAccountId } = await auth.getUserStripeDetails(email);
+    console.log("Account ID:", stripeConnectedAccountId);
+    if (stripeConnectedAccountId == null || stripeConnectedAccountId == "") {
+      return res.json({ success: false, accountId: stripeConnectedAccountId });
     }
 
     try {
       const loginLink = await stripe.accounts.createLoginLink(
-        stripeConnectedAccountId,
+        stripeConnectedAccountId
       );
 
       res.json({
@@ -272,23 +283,23 @@ const continueOnboarding = async (req, res) => {
         loginLink: loginLink,
       });
     } catch (error) {
-      console.error('Error creating login link:, Starting new onboarding');
+      console.error("Error creating login link:, Starting new onboarding");
       const account = await stripe.accounts.create({
         controller: {
           losses: {
-            payments: 'application',
+            payments: "application",
           },
           fees: {
-            payer: 'application',
+            payer: "application",
           },
           stripe_dashboard: {
-            type: 'express',
+            type: "express",
           },
         },
         business_profile: {
-          url: 'https://hayersimrat23.wixsite.com/getpanda',
-          mcc: '5734',
-          product_description: 'Test product description',
+          url: "https://hayersimrat23.wixsite.com/getpanda",
+          mcc: "5734",
+          product_description: "Test product description",
         },
       });
 
@@ -296,12 +307,12 @@ const continueOnboarding = async (req, res) => {
         account: account.id,
         refresh_url:
           config.SERVER_URL +
-          '/api/auth/createStripeConnectedAccountRefreshURL',
+          "/api/auth/createStripeConnectedAccountRefreshURL",
         return_url:
-          config.SERVER_URL + '/api/auth/createStripeConnectedAccountReturnURL',
-        type: 'account_onboarding',
+          config.SERVER_URL + "/api/auth/createStripeConnectedAccountReturnURL",
+        type: "account_onboarding",
         collection_options: {
-          fields: 'eventually_due',
+          fields: "eventually_due",
         },
       });
 
@@ -314,10 +325,10 @@ const continueOnboarding = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Error creating login link:', error);
+    console.error("Error creating login link:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create login link',
+      error: "Failed to create login link",
     });
   }
 };
@@ -329,44 +340,44 @@ const chargeCustomerOffSession = async ({
   broadcasterUsername,
 }) => {
   try {
-    console.log('amount:', amount);
+    console.log("amount:", amount);
     // Assuming auth.getUserStripeDetails() requires the username instead of email
-    const {email} = await auth.getUserDetailsFromUsername(userUsername);
-    const {stripeUserId} = await auth.getUserStripeDetails(email);
-    console.log('Account ID:', stripeUserId);
+    const { email } = await auth.getUserDetailsFromUsername(userUsername);
+    const { stripeUserId } = await auth.getUserStripeDetails(email);
+    console.log("Account ID:", stripeUserId);
 
     if (!stripeUserId) {
-      return {success: false, error: 'Stripe user ID not found'};
+      return { success: false, error: "Stripe user ID not found" };
     }
 
     const paymentMethods = await stripe.customers.listPaymentMethods(
       stripeUserId,
       {
         limit: 3,
-      },
+      }
     );
 
     if (paymentMethods.length === 0) {
-      return {success: false, error: 'No payment methods available'};
+      return { success: false, error: "No payment methods available" };
     }
 
     const amountInCents = Math.round(amount * 100);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
-      currency: 'cad',
+      currency: "cad",
       customer: stripeUserId,
       payment_method: paymentMethods.data[0].id,
-      return_url: 'http://localhost:3000/api/auth/webhook',
+      return_url: "http://localhost:3000/api/auth/webhook",
       off_session: true,
       confirm: true,
     });
 
-    console.log('PaymentIntent created:', paymentIntent.id);
-    return {success: true, paymentIntentId: paymentIntent.id};
+    console.log("PaymentIntent created:", paymentIntent.id);
+    return { success: true, paymentIntentId: paymentIntent.id };
   } catch (error) {
-    console.error('Error charging customer:', error);
-    return {success: false, error: 'Failed to charge customer'};
+    console.error("Error charging customer:", error);
+    return { success: false, error: "Failed to charge customer" };
   }
 };
 
@@ -377,42 +388,42 @@ const chargeCustomerOffSessionForAccount = async ({
   broadcasterUsername,
 }) => {
   try {
-    console.log('amount:', amount);
+    console.log("amount:", amount);
     // Assuming auth.getUserStripeDetails() requires the username instead of email
-    const {email} = await auth.getUserDetailsFromUsername(userUsername);
-    const {stripeUserId} = await auth.getUserStripeDetails(email);
-    console.log('Account ID:', stripeUserId);
+    const { email } = await auth.getUserDetailsFromUsername(userUsername);
+    const { stripeUserId } = await auth.getUserStripeDetails(email);
+    console.log("Account ID:", stripeUserId);
 
-    const {email: sellerEmail} = await auth.getUserDetailsFromUsername(
-      broadcasterUsername,
+    const { email: sellerEmail } = await auth.getUserDetailsFromUsername(
+      broadcasterUsername
     );
-    const {stripeConnectedAccountId} = await auth.getUserStripeDetails(
-      sellerEmail,
+    const { stripeConnectedAccountId } = await auth.getUserStripeDetails(
+      sellerEmail
     );
 
     if (!stripeUserId) {
-      return {success: false, error: 'Stripe user ID not found'};
+      return { success: false, error: "Stripe user ID not found" };
     }
 
     const paymentMethods = await stripe.customers.listPaymentMethods(
       stripeUserId,
       {
         limit: 3,
-      },
+      }
     );
 
     if (paymentMethods.length === 0) {
-      return {success: false, error: 'No payment methods available'};
+      return { success: false, error: "No payment methods available" };
     }
 
     const amountInCents = Math.round(amount * 100);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
-      currency: 'cad',
+      currency: "cad",
       customer: stripeUserId,
       payment_method: paymentMethods.data[0].id,
-      return_url: 'http://localhost:3000/api/auth/webhook',
+      return_url: "http://localhost:3000/api/auth/webhook",
       off_session: true,
       confirm: true,
       application_fee_amount: Math.round(amountInCents * config.COMMISIONRATE),
@@ -421,16 +432,16 @@ const chargeCustomerOffSessionForAccount = async ({
       },
     });
 
-    console.log('PaymentIntent created:', paymentIntent.id);
-    return {success: true, paymentIntentId: paymentIntent.id};
+    console.log("PaymentIntent created:", paymentIntent.id);
+    return { success: true, paymentIntentId: paymentIntent.id };
   } catch (error) {
-    console.error('Error charging customer:', error);
-    return {success: false, error: 'Failed to charge customer'};
+    console.error("Error charging customer:", error);
+    return { success: false, error: "Failed to charge customer" };
   }
 };
 
 const stripeWebhooks = async (req, res) => {
-  console.log('Webhook called');
+  console.log("Webhook called");
   let event = req.body;
   // Only verify the event if you have an endpoint secret defined.
   // Otherwise use the basic event deserialized with JSON.parse
@@ -451,13 +462,13 @@ const stripeWebhooks = async (req, res) => {
 
   // Handle the event
   switch (event.type) {
-    case 'payment_intent.succeeded':
+    case "payment_intent.succeeded":
       const paymentIntent = event.data.object;
       console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
       // Then define and call a method to handle the successful payment intent.
       // handlePaymentIntentSucceeded(paymentIntent);
       break;
-    case 'payment_method.attached':
+    case "payment_method.attached":
       const paymentMethod = event.data.object;
       // Then define and call a method to handle the successful attachment of a PaymentMethod.
       // handlePaymentMethodAttached(paymentMethod);
