@@ -12,11 +12,17 @@ const fs = require("fs");
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Set the destination folder
+    const uploadDir = path.join(__dirname, "uploads");
+
+    // Check if the directory exists, if not, create it
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true }); // Create directory and any necessary subdirectories
+    }
+
+    cb(null, uploadDir); // Set the destination folder
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); // Set the file name
-    //cb(null, Date.now() + '.jpg');
   },
 });
 
@@ -25,11 +31,17 @@ const upload = multer({ storage: storage });
 // Configure multer for file uploads
 const storageProducts = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/products"); // Set the destination folder
+    const dir = path.join(__dirname, "..", "uploads", "products");
+
+    // Check if the directory exists, if not, create it
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true }); // Create directory and any necessary subdirectories
+    }
+
+    cb(null, dir); // Set the destination folder
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); // Set the file name
-    //cb(null, Date.now() + '.jpg');
   },
 });
 
