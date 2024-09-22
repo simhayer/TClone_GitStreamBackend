@@ -625,16 +625,7 @@ exports.addProductToUser = [
 
       // Handle product image upload
       if (req.file) {
-        const productsDir = path.resolve(
-          __dirname,
-          "..",
-          "uploads",
-          "products"
-        );
-        productImageUrl = path.join(productsDir, req.file.filename); // Adjust the path as necessary
-
-        // Optionally, you can move or process the file here
-        // fs.renameSync(req.file.path, productImageUrl);
+        productImageUrl = path.join("products", req.file.filename);
       }
 
       // Create and save the product
