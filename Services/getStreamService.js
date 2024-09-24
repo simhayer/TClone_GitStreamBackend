@@ -1,10 +1,7 @@
-let fetch;
-
-(async () => {
-  fetch = (await import("node-fetch")).default;
-})();
-
+const fetch = require("node-fetch");
 const { StreamClient } = require("@stream-io/node-sdk");
+
+globalThis.fetch = fetch;
 
 const apiKey = "8ryv3hxy9p2s";
 const secret =
