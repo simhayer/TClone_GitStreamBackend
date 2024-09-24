@@ -6,9 +6,10 @@ const secret =
 client = new StreamClient(apiKey, secret);
 
 const createStreamUser = async (req, res) => {
+  console.log("Creating stream user");
   try {
     const { username } = req.body;
-
+    console.log("Username:", username);
     const newUser = {
       id: username,
       role: "user",
@@ -18,11 +19,15 @@ const createStreamUser = async (req, res) => {
       name: username,
       image: "link/to/profile/image",
     };
+
     await client.upsertUsers([newUser]);
+
+    console.log("User created successfully");
 
     token = client.generateUserToken({ user_id: username });
     res.status(201).json(token);
   } catch (error) {
+    console.error("Error creating stream user:", error);
     res.status(400).json({ error: error.message });
   }
 };
