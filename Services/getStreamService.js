@@ -1,8 +1,10 @@
-const { StreamClient } = require("@stream-io/node-sdk");
-const fetch = require("node-fetch");
+let fetch;
 
-// Polyfill fetch for Node.js environment
-globalThis.fetch = fetch;
+(async () => {
+  fetch = (await import("node-fetch")).default;
+})();
+
+const { StreamClient } = require("@stream-io/node-sdk");
 
 const apiKey = "8ryv3hxy9p2s";
 const secret =
