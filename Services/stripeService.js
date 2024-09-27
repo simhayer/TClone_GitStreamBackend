@@ -141,7 +141,9 @@ const createStripeConnectedAccount = async (req, res) => {
       refresh_url:
         config.SERVER_URL + "/api/auth/createStripeConnectedAccountRefreshURL",
       return_url:
-        config.SERVER_URL + "/api/auth/createStripeConnectedAccountReturnURL",
+        config.SERVER_URL +
+        "/api/auth/createStripeConnectedAccountReturnURL?accountId=" +
+        account.id,
       type: "account_onboarding",
       collection_options: {
         fields: "eventually_due",
@@ -326,7 +328,9 @@ const continueOnboarding = async (req, res) => {
           config.SERVER_URL +
           "/api/auth/createStripeConnectedAccountRefreshURL",
         return_url:
-          config.SERVER_URL + "/api/auth/createStripeConnectedAccountReturnURL",
+          config.SERVER_URL +
+          "/api/auth/createStripeConnectedAccountReturnURL?accountId=" +
+          account.id,
         type: "account_onboarding",
         collection_options: {
           fields: "eventually_due",
