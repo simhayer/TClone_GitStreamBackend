@@ -48,6 +48,10 @@ app.get("/products/:filename", (req, res) => {
   res.sendFile(filePath);
 });
 
+app.get("/returnURL", (req, res) => {
+  res.sendFile(path.join(__dirname, "Screens", "ReturnToBars.html"));
+});
+
 require("./Socket/socketEvent")(io);
 require("./Socket/socketFunction").init(io);
 //connectDB();

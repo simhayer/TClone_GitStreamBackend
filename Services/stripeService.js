@@ -164,9 +164,24 @@ const createStripeConnectedAccount = async (req, res) => {
 };
 
 const createStripeConnectedAccountReturnURL = async (req, res) => {
-  console.log("Return URL called");
-  console.log(req.body);
-  res.json({ message: "Return URL called" });
+  try {
+    console.log("Return URL called");
+    console.log(req.body);
+    const { accountId } = req.query;
+
+    console.log("Account ID:", accountId);
+    if (accountId == null || accountId == "") {
+      return res.json({ success: false, accountId: accountId });
+    }
+    const loginLink = await stripe.accounts.createLoginLink(accountId);
+    res.redirect(loginLink.url);
+  } catch (error) {
+    console.error("Error creating login link:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create login link",
+    });
+  }
 };
 
 const createStripeConnectedAccountRefreshURL = async (req, res) => {
@@ -194,7 +209,9 @@ const createStripeConnectedAccountRefreshURL = async (req, res) => {
       refresh_url:
         config.SERVER_URL + "/api/auth/createStripeConnectedAccountRefreshURL",
       return_url:
-        config.SERVER_URL + "/api/auth/createStripeConnectedAccountReturnURL",
+        config.SERVER_URL +
+        "/api/auth/createStripeConnectedAccountReturnURL?accountId=" +
+        account.id,
       type: "account_onboarding",
       collection_options: {
         fields: "eventually_due",

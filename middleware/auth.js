@@ -52,20 +52,29 @@ exports.register = async (req, res, next) => {
   try {
     console.log("Register function called");
     console.log("Request body:", req.body);
+
     const { fullname, email, password } = req.body;
 
+    const lowerCaseEmail = email.toLowerCase();
+
+    const randomUsername = `random_${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Increment the highestUserID and save it
     let appData = await AppData.findOne();
     appData.highestUserID += 1;
     await appData.save();
 
     const newUserID = appData.highestUserID;
 
-    const existingUser = await User.findOne({ email });
+    // Check if a user with this email already exists
+    const existingUser = await User.findOne({ email: lowerCaseEmail });
     if (existingUser) {
       return res
         .status(400)
         .json({ message: "User with this email already exists" });
     }
+
+    // Check if password is provided and meets the length requirement
     if (!password) {
       return res.status(400).json({ message: "Password does not exist" });
     }
@@ -75,12 +84,14 @@ exports.register = async (req, res, next) => {
         .json({ message: "Password less than 6 characters" });
     }
 
+    // Hash the password and create the user
     bcrypt.hash(password, 10).then(async (hash) => {
       await User.create({
         fullname,
-        email,
+        email: lowerCaseEmail,
         password: hash,
         userID: newUserID,
+        username: randomUsername,
       })
         .then((user) =>
           res.status(200).json({
@@ -90,15 +101,15 @@ exports.register = async (req, res, next) => {
         )
         .catch((error) =>
           res.status(400).json({
-            message: "User not successful created",
+            message: "User not successfully created",
             error: error.message,
           })
         );
     });
   } catch (err) {
     res.status(401).json({
-      message: "User not successful created",
-      error: err.mesage,
+      message: "User not successfully created",
+      error: err.message,
       stack: err.stack,
     });
   }
@@ -110,6 +121,8 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
     console.log("Request body:", req.body);
 
+    const lowerCaseEmail = email.toLowerCase();
+
     // Check if email and password are provided
     if (!email || !password) {
       return res.status(400).json({
@@ -117,7 +130,7 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: lowerCaseEmail });
     if (!user) {
       console.log("User not found with email:", email);
       return res.status(400).json({
@@ -158,6 +171,9 @@ exports.updateUsername = async (req, res, next) => {
     const { email, username } = req.body;
     console.log("Request body:", req.body);
 
+    const lowerCaseEmail = email.toLowerCase();
+    const lowerCaseUsername = username.toLowerCase();
+
     // Check if email and password are provided
     if (!email || !username) {
       return res.status(400).json({
@@ -165,7 +181,7 @@ exports.updateUsername = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: lowerCaseEmail });
     if (!user) {
       console.log("User not found with email:", email);
       return res.status(400).json({
@@ -175,7 +191,7 @@ exports.updateUsername = async (req, res, next) => {
     }
 
     // Compare the provided password with the hashed password in the database
-    const usrnameExists = await checkUsernameExists(username);
+    const usrnameExists = await checkUsernameExists(lowerCaseUsername);
 
     if (usrnameExists) {
       console.log("Username already exists");
@@ -183,7 +199,7 @@ exports.updateUsername = async (req, res, next) => {
         message: "Username already exists",
       });
     } else {
-      user.username = username;
+      user.username = lowerCaseUsername;
       await user.save();
       return res.status(200).json({
         message: "Username updated",
@@ -201,10 +217,11 @@ exports.updateUsername = async (req, res, next) => {
 
 async function checkUsernameExists(username) {
   try {
+    const lowerCaseUsername = username.toLowerCase();
     console.log("Check username request received");
     console.log("Username:", username);
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username: lowerCaseUsername });
     return !!user; // Returns true if user exists, false otherwise
   } catch (error) {
     console.error("Error during username check process:", error);
@@ -252,6 +269,8 @@ exports.sendResetCode = async (req, res, next) => {
   try {
     const { email } = req.body;
 
+    const lowerCaseEmail = email.toLowerCase();
+
     const code = generateRandomCode();
 
     // First - Verifying if email is present
@@ -261,7 +280,7 @@ exports.sendResetCode = async (req, res, next) => {
       const newCode = code + "." + currentDate.toString();
 
       const updateResult = await User.updateOne(
-        { email },
+        { email: lowerCaseEmail },
         { resetCode: newCode }
       );
 
@@ -272,7 +291,7 @@ exports.sendResetCode = async (req, res, next) => {
       }
 
       // Call function to send reset code mail
-      sendResetCodeMail(email, code);
+      sendResetCodeMail(lowerCaseEmail, code);
 
       res.status(201).json({ message: "Update successful", email });
     } else {
@@ -289,10 +308,12 @@ exports.verifyResetCode = async (req, res, next) => {
   try {
     const { email, resetCode } = req.body;
 
+    const lowerCaseEmail = email.toLowerCase();
+
     // First - Verifying if email and code are present
     if (email && resetCode) {
       // Find the user with the given email
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email: lowerCaseEmail });
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -335,9 +356,11 @@ exports.updatePassword = async (req, res, next) => {
     console.log(req.body);
     const { email, password } = req.body;
 
+    const lowerCaseEmail = email.toLowerCase();
+
     // First - Verifying if email is present
     if (email) {
-      const existingUser = await User.findOne({ email });
+      const existingUser = await User.findOne({ email: lowerCaseEmail });
       if (!existingUser) {
         return res.status(400).json({ message: "User not found" });
       }
@@ -351,7 +374,7 @@ exports.updatePassword = async (req, res, next) => {
       }
 
       bcrypt.hash(password, 10).then(async (hash) => {
-        await User.updateOne({ email }, { password: hash })
+        await User.updateOne({ email: lowerCaseEmail }, { password: hash })
           .then((user) =>
             res.status(200).json({
               message: "Password Updated",
@@ -401,13 +424,14 @@ exports.logout = async (req, res, next) => {
   try {
     const { email } = req.body;
     // Check if username and password is provided
+    const lowerCaseEmail = email.toLowerCase();
     if (!email) {
       return res.status(400).json({
         message: "email not present",
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: lowerCaseEmail });
     if (!user) {
       res.status(400).json({
         message: "Logout not successful",
@@ -434,13 +458,15 @@ exports.updateProfilePicture = [
     try {
       const { email } = req.body;
 
+      const lowerCaseEmail = email.toLowerCase();
+
       if (!email || !req.file) {
         return res.status(400).json({
           message: "Email or profile picture not present",
         });
       }
 
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email: lowerCaseEmail });
 
       if (!user) {
         return res.status(400).json({
@@ -476,7 +502,9 @@ exports.getUserDetailsFromUsername = async (username) => {
       return null;
     }
 
-    const user = await User.findOne({ username }); // Look up the user by username
+    const lowerCaseUsername = username.toLowerCase();
+
+    const user = await User.findOne({ username: lowerCaseUsername }); // Look up the user by username
     if (!user) {
       return null;
     }
@@ -501,7 +529,9 @@ exports.getUserStripeDetails = async (email) => {
       return null;
     }
 
-    const user = await User.findOne({ email }); // Look up the user by email
+    const lowerCaseEmail = email.toLowerCase();
+
+    const user = await User.findOne({ email: lowerCaseEmail }); // Look up the user by email
     if (!user) {
       return null;
     } else {
@@ -528,7 +558,9 @@ exports.getUserStripeId = async (email) => {
       return null;
     }
 
-    const user = await User.findOne({ email }); // Look up the user by email
+    const lowerCaseEmail = email.toLowerCase();
+
+    const user = await User.findOne({ email: lowerCaseEmail }); // Look up the user by email
     if (!user) {
       return null;
     } else {
@@ -546,7 +578,9 @@ exports.setUserStripeId = async (email, stripeUserId) => {
       return;
     }
 
-    const user = await User.findOne({ email });
+    const lowerCaseEmail = email.toLowerCase();
+
+    const user = await User.findOne({ email: lowerCaseEmail });
     if (!user) {
       return;
     } else {
@@ -568,7 +602,9 @@ exports.setUserStripeConnectedAccountId = async (
       return;
     }
 
-    const user = await User.findOne({ email });
+    const lowerCaseEmail = email.toLowerCase();
+
+    const user = await User.findOne({ email: lowerCaseEmail });
     if (!user) {
       return;
     } else {
@@ -592,7 +628,11 @@ exports.getUserProducts = async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    const user = await User.findOne({ email }).populate("products"); // Look up the user by email
+    const lowerCaseEmail = email.toLowerCase();
+
+    const user = await User.findOne({ email: lowerCaseEmail }).populate(
+      "products"
+    ); // Look up the user by email
     if (!user) {
       res.status(404).json({ message: "User not found" });
     } else {
@@ -612,11 +652,13 @@ exports.addProductToUser = [
     try {
       const { email, name, size, type } = req.body;
 
+      const lowerCaseEmail = email.toLowerCase();
+
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
 
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email: lowerCaseEmail });
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -660,7 +702,11 @@ exports.removeProductsFromUser = async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    const user = await User.findOne({ email }).populate("products"); // Populate to access product details
+    const lowerCaseEmail = email.toLowerCase();
+
+    const user = await User.findOne({ email: lowerCaseEmail }).populate(
+      "products"
+    ); // Populate to access product details
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }

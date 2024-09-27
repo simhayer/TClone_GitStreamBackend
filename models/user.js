@@ -1,5 +1,5 @@
 // user.js
-const Mongoose = require('mongoose');
+const Mongoose = require("mongoose");
 
 // Define a schema for products
 const ProductSchema = new Mongoose.Schema({
@@ -33,7 +33,7 @@ const UserSchema = new Mongoose.Schema({
   },
   username: {
     type: String,
-    default: '',
+    default: "",
   },
   userID: {
     type: Number,
@@ -48,41 +48,41 @@ const UserSchema = new Mongoose.Schema({
   },
   role: {
     type: String,
-    default: 'Basic',
+    default: "Basic",
     required: true,
   },
   resetCode: {
     type: String,
-    default: 'Basic',
+    default: "Basic",
     required: false,
   },
   profilePicture: {
     type: String,
-    default: '',
+    default: "",
   },
   stripeUserId: {
     type: String,
-    default: '',
+    default: "",
   },
   stripeConnectedAccountId: {
     type: String,
-    default: '',
+    default: "",
   },
   products: {
     type: [Mongoose.Schema.Types.ObjectId],
-    ref: 'product',
+    ref: "product",
   },
 });
 
 const OrderSchema = new Mongoose.Schema({
   buyer: {
     type: Mongoose.Schema.Types.ObjectId,
-    ref: 'user',
+    ref: "user",
     required: true,
   },
   seller: {
     type: Mongoose.Schema.Types.ObjectId,
-    ref: 'user',
+    ref: "user",
     required: true,
   },
   amount: {
@@ -91,7 +91,7 @@ const OrderSchema = new Mongoose.Schema({
   },
   product: {
     type: Mongoose.Schema.Types.ObjectId,
-    ref: 'product',
+    ref: "product",
     required: true,
   },
   orderDate: {
@@ -100,8 +100,8 @@ const OrderSchema = new Mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Shipped', 'Completed', 'Cancelled'],
-    default: 'Pending',
+    enum: ["Pending", "Shipped", "Completed", "Cancelled"],
+    default: "Pending",
   },
   transactionId: {
     type: String,
@@ -117,8 +117,8 @@ const OrderSchema = new Mongoose.Schema({
   },
 });
 
-const User = Mongoose.model('user', UserSchema);
-const Order = Mongoose.model('order', OrderSchema);
-const Product = Mongoose.model('product', ProductSchema);
+const User = Mongoose.model("user", UserSchema);
+const Order = Mongoose.model("order", OrderSchema);
+const Product = Mongoose.model("product", ProductSchema);
 
-module.exports = {User, Order, Product};
+module.exports = { User, Order, Product };

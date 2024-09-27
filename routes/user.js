@@ -17,7 +17,6 @@ const {
 } = require("../middleware/auth");
 
 const broadcastController = require("../Controllers/broadcastController");
-const consumerController = require("../Controllers/consumerController");
 const stripeService = require("../Services/stripeService");
 const orderService = require("../Services/orderService");
 const getStreamService = require("../Services/getStreamService");
@@ -43,14 +42,12 @@ router.route("/getUserProducts").post(getUserProducts);
 // Broadcast Routes
 router.route("/broadcast").post(broadcastController.add);
 router.route("/list-broadcast").get(broadcastController.fetch);
-router.route("/consumer").post(consumerController.add);
 
 // Stripe Routes
 router.route("/paymentSheet").post(stripeService.paymentSheet);
 router
   .route("/checkStripePaymentandAddressPresent")
   .post(stripeService.checkStripePaymentandAddressPresent);
-//router.route('/create-payment-intent').post(consumerController.createPaymentIntent);
 
 router
   .route("/updateStripeCustomerAddress")
