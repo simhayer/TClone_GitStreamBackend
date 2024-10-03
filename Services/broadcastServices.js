@@ -236,15 +236,29 @@ function fetch() {
   }
 }
 
-function fetchByPage(page, limit) {
+function fetchByPage(page, limit, search) {
   console.log("fetchByPage");
+
+  const searchLower = search.toLowerCase();
+
+  const filteredBroadcasters = Object.keys(broadcasters).filter((bs) => {
+    const broadcaster = broadcasters[bs];
+    return (
+      broadcaster.username.toLowerCase().includes(searchLower) ||
+      broadcaster.title.toLowerCase().includes(searchLower)
+    );
+  });
+
   var data = [];
   var startIndex = (page - 1) * limit;
   var endIndex = page * limit;
-  var broadcasterKeys = Object.keys(broadcasters);
 
-  for (var i = startIndex; i < endIndex && i < broadcasterKeys.length; i++) {
-    var bs = broadcasterKeys[i];
+  for (
+    var i = startIndex;
+    i < endIndex && i < filteredBroadcasters.length;
+    i++
+  ) {
+    var bs = filteredBroadcasters[i];
     data.push({
       id: bs,
       username: broadcasters[bs].username,

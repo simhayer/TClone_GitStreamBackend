@@ -81,8 +81,8 @@ async function fetch(req, res) {
 
 async function fetchByPage(req, res) {
   try {
-    const { page, limit } = req.body;
-    var data = await broadcastService.fetchByPage(page, limit);
+    const { page, limit, search } = req.body;
+    var data = await broadcastService.fetchByPage(page, limit, search);
     res.json(data);
   } catch (error) {
     console.error("An error occurred during fetch", error);
