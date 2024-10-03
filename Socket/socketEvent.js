@@ -91,13 +91,13 @@ module.exports = (io) => {
       }
     });
 
-    // socket.on("disconnect", () => {
-    //   try {
-    //     broadcastService.removeBroadcast(socket.id);
-    //     console.log(`User ${socket.id} disconnected`);
-    //   } catch (error) {
-    //     console.error("Error removing broadcast on disconnect:", error);
-    //   }
-    // });
+    socket.on("disconnect", () => {
+      try {
+        broadcastService.removeBroadcast(socket.id);
+        console.log(`User ${socket.id} disconnected`);
+      } catch (error) {
+        console.error("Error removing broadcast on disconnect:", error);
+      }
+    });
   });
 };
