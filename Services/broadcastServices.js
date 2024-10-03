@@ -236,6 +236,32 @@ function fetch() {
   }
 }
 
+function fetchByPage(page, limit) {
+  console.log("fetchByPage");
+  var data = [];
+  var startIndex = (page - 1) * limit;
+  var endIndex = page * limit;
+  var broadcasterKeys = Object.keys(broadcasters);
+
+  for (var i = startIndex; i < endIndex && i < broadcasterKeys.length; i++) {
+    var bs = broadcasterKeys[i];
+    data.push({
+      id: bs,
+      username: broadcasters[bs].username,
+      profilePicture: broadcasters[bs].profilePicture,
+      title: broadcasters[bs].title,
+      thumbnail: broadcasters[bs].thumbnailFilename,
+      meetingId: broadcasters[bs].meetingId,
+      socketID: broadcasters[bs].socket_id,
+      watchers: broadcasters[bs].watchers,
+      comments: broadcasters[bs].comments,
+      isBidding: broadcasters[bs].isBidding,
+      curBidDetails: broadcasters[bs].curBidDetails,
+    });
+  }
+  return data;
+}
+
 module.exports = {
   addBroadcast,
   fetch,
@@ -245,4 +271,5 @@ module.exports = {
   startBid,
   endBid,
   removeBroadcast,
+  fetchByPage,
 };

@@ -41,7 +41,8 @@ router.route("/getUserProducts").post(getUserProducts);
 
 // Broadcast Routes
 router.route("/broadcast").post(broadcastController.add);
-router.route("/list-broadcast").get(broadcastController.fetch);
+//router.route("/list-broadcast").get(broadcastController.fetch);
+router.route("/list-broadcast").post(broadcastController.fetchByPage);
 
 // Stripe Routes
 router.route("/paymentSheet").post(stripeService.paymentSheet);

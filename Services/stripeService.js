@@ -136,19 +136,7 @@ const createStripeConnectedAccount = async (req, res) => {
       },
     });
 
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url:
-        config.SERVER_URL + "/api/auth/createStripeConnectedAccountRefreshURL",
-      return_url:
-        config.SERVER_URL +
-        "/api/auth/createStripeConnectedAccountReturnURL?accountId=" +
-        account.id,
-      type: "account_onboarding",
-      collection_options: {
-        fields: "eventually_due",
-      },
-    });
+    const accountLink = await createStripeAccountLink(account.id);
 
     await auth.setUserStripeConnectedAccountId(email, account.id);
 
@@ -206,19 +194,7 @@ const createStripeConnectedAccountRefreshURL = async (req, res) => {
       },
     });
 
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url:
-        config.SERVER_URL + "/api/auth/createStripeConnectedAccountRefreshURL",
-      return_url:
-        config.SERVER_URL +
-        "/api/auth/createStripeConnectedAccountReturnURL?accountId=" +
-        account.id,
-      type: "account_onboarding",
-      collection_options: {
-        fields: "eventually_due",
-      },
-    });
+    const accountLink = await createStripeAccountLink(account.id);
 
     await auth.setUserStripeConnectedAccountId(email, account.id);
 
@@ -322,20 +298,7 @@ const continueOnboarding = async (req, res) => {
         },
       });
 
-      const accountLink = await stripe.accountLinks.create({
-        account: account.id,
-        refresh_url:
-          config.SERVER_URL +
-          "/api/auth/createStripeConnectedAccountRefreshURL",
-        return_url:
-          config.SERVER_URL +
-          "/api/auth/createStripeConnectedAccountReturnURL?accountId=" +
-          account.id,
-        type: "account_onboarding",
-        collection_options: {
-          fields: "eventually_due",
-        },
-      });
+      const accountLink = await createStripeAccountLink(account.id);
 
       await auth.setUserStripeConnectedAccountId(email, account.id);
 
@@ -353,6 +316,28 @@ const continueOnboarding = async (req, res) => {
     });
   }
 };
+
+async function createStripeAccountLink(accountid) {
+  try {
+    const accountLink = await stripe.accountLinks.create({
+      account: accountid,
+      refresh_url:
+        config.SERVER_URL + "/api/auth/createStripeConnectedAccountRefreshURL",
+      return_url:
+        config.SERVER_URL +
+        "/api/auth/createStripeConnectedAccountReturnURL?accountId=" +
+        accountid,
+      type: "account_onboarding",
+      collection_options: {
+        fields: "eventually_due",
+      },
+    });
+    return { accountLink };
+  } catch (error) {
+    console.error("Error saving order:", error);
+    return { accountLink: null };
+  }
+}
 
 const chargeCustomerOffSession = async ({
   id,

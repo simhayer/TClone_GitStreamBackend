@@ -79,7 +79,21 @@ async function fetch(req, res) {
   }
 }
 
+async function fetchByPage(req, res) {
+  try {
+    const { page, limit } = req.body;
+    var data = await broadcastService.fetchByPage(page, limit);
+    res.json(data);
+  } catch (error) {
+    console.error("An error occurred during fetch", error);
+    res
+      .status(400)
+      .json({ message: "An error occurred", error: error.message });
+  }
+}
+
 module.exports = {
   add,
   fetch,
+  fetchByPage,
 };
