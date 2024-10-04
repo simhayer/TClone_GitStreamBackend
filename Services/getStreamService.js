@@ -3,9 +3,9 @@ const { StreamClient } = require("@stream-io/node-sdk");
 
 globalThis.fetch = fetch;
 
-const apiKey = "8ryv3hxy9p2s";
+const apiKey = "c59unja7hkef";
 const secret =
-  "z5fr9c6rytbjcqueha8g7c48cfwtcyba86mnupqsxg4ccfjgxfmek9n87us7wrqa";
+  "amfp4vht3t47ktbhh8vzyqxpudcau9kxqgxcscartqz5frwpmh5xbfzm83pv6q8u";
 client = new StreamClient(apiKey, secret);
 
 const createStreamUser = async (req, res) => {
@@ -21,9 +21,8 @@ const createStreamUser = async (req, res) => {
     };
 
     await client.upsertUsers([newUser]);
-
     token = client.generateUserToken({ user_id: username });
-    res.status(201).json(token);
+    res.status(201).json({ apiKey, token });
   } catch (error) {
     console.error("Error creating stream user:", error);
     res.status(400).json({ error: error.message });
