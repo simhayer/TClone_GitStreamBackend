@@ -23,7 +23,7 @@ const createStreamUser = async (req, res) => {
     await client.upsertUsers([newUser]);
     const validity = 24 * 60 * 60;
     // token = client.generateUserToken({ user_id: username });
-    client.generateUserToken({
+    token = client.generateUserToken({
       user_id: username,
       validity_in_seconds: validity,
     });
