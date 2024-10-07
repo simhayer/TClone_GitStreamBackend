@@ -21,7 +21,12 @@ const createStreamUser = async (req, res) => {
     };
 
     await client.upsertUsers([newUser]);
-    token = client.generateUserToken({ user_id: username });
+    const validity = 24 * 60 * 60;
+    // token = client.generateUserToken({ user_id: username });
+    client.generateUserToken({
+      user_id: username,
+      validity_in_seconds: validity,
+    });
     res.status(201).json({ apiKey, token });
   } catch (error) {
     console.error("Error creating stream user:", error);
