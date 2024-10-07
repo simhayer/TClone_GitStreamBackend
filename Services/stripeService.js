@@ -138,6 +138,8 @@ const createStripeConnectedAccount = async (req, res) => {
 
     const accountLink = await createStripeAccountLink(account.id);
 
+    console.log("accountLink:", accountLink);
+
     await auth.setUserStripeConnectedAccountId(email, account.id);
 
     res.json({
@@ -332,7 +334,7 @@ async function createStripeAccountLink(accountid) {
         fields: "eventually_due",
       },
     });
-    return { accountLink };
+    return accountLink;
   } catch (error) {
     console.error("Error saving order:", error);
     return { accountLink: null };
