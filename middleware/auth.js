@@ -748,3 +748,29 @@ exports.removeProductsFromUser = async (req, res) => {
       .json({ message: "An error occurred", error: error.message });
   }
 };
+
+exports.getUserDetailsFromUsernameClient = async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json({ message: "Username is required" });
+    }
+
+    const lowerCaseUsername = username.toLowerCase();
+
+    const user = await User.findOne({ username: lowerCaseUsername });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      fullname: user.fullname,
+      profilePicture: user.profilePicture,
+    });
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    return res
+      .status(400)
+      .json({ message: "An error occurred", error: error.message });
+  }
+};

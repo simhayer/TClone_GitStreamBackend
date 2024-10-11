@@ -14,6 +14,7 @@ const {
   addProductToUser,
   removeProductsFromUser,
   getUserProducts,
+  getUserDetailsFromUsernameClient,
 } = require("../middleware/auth");
 
 const broadcastController = require("../Controllers/broadcastController");
@@ -38,6 +39,10 @@ router.post("/updateProfilePicture", updateProfilePicture);
 router.route("/addProductToUser").post(addProductToUser);
 router.route("/removeProductsFromUser").post(removeProductsFromUser);
 router.route("/getUserProducts").post(getUserProducts);
+
+router
+  .route("/getUserDetailsFromUsername")
+  .post(getUserDetailsFromUsernameClient);
 
 // Broadcast Routes
 router.route("/broadcast").post(broadcastController.add);

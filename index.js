@@ -19,33 +19,92 @@ console.log(`Server started on port ${port}`);
 
 // Handling Error
 process.on("unhandledRejection", (err) => {
-  console.log(`An error occurred: ${err.message}`);
-  httpServer.close(() => process.exit(1));
+  console.log(`An unhandled rejection occurred: ${err.message}`);
+  // Log the error but don't shut down the server
 });
 
-// Endpoint to get profile pictures
+process.on("uncaughtException", (err) => {
+  console.log(`An uncaught exception occurred: ${err.message}`);
+  // Log the error but don't shut down the server
+  // Optionally: httpServer.close(() => process.exit(1));
+});
+
 app.get("/profilePicture/:filename", (req, res) => {
-  console.log("Profile picture requested", req.params.filename);
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, "uploads", filename);
-  console.log(filePath);
-  res.sendFile(filePath);
+  try {
+    console.log("Profile picture requested:", req.params.filename);
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, "uploads", filename);
+
+    // Check if the file exists synchronously
+    if (!fs.existsSync(filePath)) {
+      console.error(`Profile picture not found: ${filePath}`);
+      return res.status(404).send("Profile picture not found");
+    }
+
+    // Send the file
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        console.error(`Error sending profile picture: ${err.message}`);
+        res.status(500).send("Error sending profile picture");
+      }
+    });
+  } catch (err) {
+    // Handle any unexpected errors
+    console.error(`Error: ${err.message}`);
+    res.status(500).send("Internal server error");
+  }
 });
 
+// Route for serving thumbnails
 app.get("/thumbnail/:filename", (req, res) => {
-  console.log("Thumbnail requested", req.params.filename);
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, "uploads/thumbnails", filename);
-  console.log(filePath);
-  res.sendFile(filePath);
+  try {
+    console.log("Thumbnail requested:", req.params.filename);
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, "uploads/thumbnails", filename);
+
+    // Check if the file exists synchronously
+    if (!fs.existsSync(filePath)) {
+      console.error(`Thumbnail not found: ${filePath}`);
+      return res.status(404).send("Thumbnail not found");
+    }
+
+    // Send the file
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        console.error(`Error sending thumbnail: ${err.message}`);
+        res.status(500).send("Error sending thumbnail");
+      }
+    });
+  } catch (err) {
+    // Handle any unexpected errors
+    console.error(`Error: ${err.message}`);
+    res.status(500).send("Internal server error");
+  }
 });
 
 app.get("/products/:filename", (req, res) => {
-  console.log("Thumbnail requested", req.params.filename);
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, "uploads/products", filename);
-  console.log(filePath);
-  res.sendFile(filePath);
+  try {
+    console.log("Thumbnail requested:", req.params.filename);
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, "uploads/products", filename);
+
+    // Check if the file exists synchronously
+    if (!fs.existsSync(filePath)) {
+      console.error(`File not found: ${filePath}`);
+      return res.status(404).send("File not found");
+    }
+
+    // Send the file
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        console.error(`Error sending file: ${err.message}`);
+        res.status(500).send("Error sending file");
+      }
+    });
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+    res.status(500).send("Internal server error");
+  }
 });
 
 app.get("/returnURL", (req, res) => {
