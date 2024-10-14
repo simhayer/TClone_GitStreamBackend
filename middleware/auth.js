@@ -14,7 +14,7 @@ const { OAuth2Client } = require("google-auth-library");
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "uploads");
+    const uploadDir = path.join(__dirname, "..", "uploads");
 
     // Check if the directory exists, if not, create it
     if (!fs.existsSync(uploadDir)) {
