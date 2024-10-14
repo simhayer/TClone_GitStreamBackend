@@ -8,6 +8,8 @@ const { sendResetCodeMail } = require("./mail");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const config = require("../config");
+const { OAuth2Client } = require("google-auth-library");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -773,4 +775,54 @@ exports.getUserDetailsFromUsernameClient = async (req, res) => {
       .status(400)
       .json({ message: "An error occurred", error: error.message });
   }
+};
+
+exports.handleGoogleSignin = async (req, res) => {
+  const { email, name, profilePicture } = req.body;
+  const lowerCaseEmail = email.toLowerCase();
+
+  try {
+    let user = await User.findOne({ email: lowerCaseEmail });
+    console.log("User found:", user);
+    if (!user) {
+      const randomPassword = generateRandomPassword();
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      const randomUsername = `random_${Math.floor(
+        1000 + Math.random() * 9000
+      )}`;
+
+      const randomUserID = 1000 + Math.random() * 9000;
+
+      // Create a new user
+      user = await User.create({
+        fullname: name,
+        email: lowerCaseEmail,
+        password: hashedPassword,
+        userID: Number(randomUserID),
+        username: randomUsername,
+        profilePicture,
+      });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign({ email: user.email }, jwtSecret, {
+      expiresIn: "20d",
+    });
+    res.status(200).json({ token, user });
+  } catch (error) {
+    console.error("Error during Google Sign-In:", error);
+    res.status(401).json({ error: "Authentication failed" });
+  }
+};
+
+const generateRandomPassword = (length = 12) => {
+  const chars =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    password += chars[randomIndex];
+  }
+  return password;
 };

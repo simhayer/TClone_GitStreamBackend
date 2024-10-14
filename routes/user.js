@@ -15,6 +15,7 @@ const {
   removeProductsFromUser,
   getUserProducts,
   getUserDetailsFromUsernameClient,
+  handleGoogleSignin,
 } = require("../middleware/auth");
 
 const broadcastController = require("../Controllers/broadcastController");
@@ -39,6 +40,7 @@ router.post("/updateProfilePicture", updateProfilePicture);
 router.route("/addProductToUser").post(addProductToUser);
 router.route("/removeProductsFromUser").post(removeProductsFromUser);
 router.route("/getUserProducts").post(getUserProducts);
+router.route("/handleGoogleSignin").post(handleGoogleSignin);
 
 router
   .route("/getUserDetailsFromUsername")
