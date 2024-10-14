@@ -686,7 +686,7 @@ exports.addProductToUser = [
       user.products.push(product._id);
       await user.save();
 
-      res.status(200).json({ message: "Product added to user", user });
+      res.status(200).json({ message: "Product added to user", product });
     } catch (error) {
       console.error("Error adding product to user:", error);
       res
