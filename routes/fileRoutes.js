@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
+const sharp = require("sharp");
 
 const router = express.Router();
 
@@ -59,7 +60,7 @@ router.get("/thumbnail/:filename", (req, res) => {
   try {
     console.log("Thumbnail requested:", req.params.filename);
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, "uploads/thumbnails", filename);
+    const filePath = path.join(__dirname, "..", "uploads/thumbnails", filename);
 
     if (!fs.existsSync(filePath)) {
       console.error(`Thumbnail not found: ${filePath}`);
@@ -83,7 +84,7 @@ router.get("/products/:filename", (req, res) => {
   try {
     console.log("Product image requested:", req.params.filename);
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, "uploads/products", filename);
+    const filePath = path.join(__dirname, "..", "uploads/products", filename);
 
     if (!fs.existsSync(filePath)) {
       console.error(`Product image not found: ${filePath}`);
