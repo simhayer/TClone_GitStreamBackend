@@ -9,7 +9,7 @@ router.get("/profilePicture/:filename", (req, res) => {
   try {
     console.log("Profile picture requested:", req.params.filename);
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, "uploads", filename);
+    const filePath = path.join(__dirname, "..", "uploads", filename);
 
     if (!fs.existsSync(filePath)) {
       console.error(`Profile picture not found: ${filePath}`);
@@ -32,7 +32,7 @@ router.get("/profilePicture/thumbnail/:filename", async (req, res) => {
   try {
     console.log("Thumbnail requested:", req.params.filename);
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, "uploads", filename);
+    const filePath = path.join(__dirname, "..", "uploads", filename);
 
     // Check if the file exists
     if (!fs.existsSync(filePath)) {
